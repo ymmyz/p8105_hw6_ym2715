@@ -1,0 +1,12 @@
+---
+title: "P8105_hw6_ym2715"
+author: "Yizhi Ma"
+date: "11/26/2018"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+```
