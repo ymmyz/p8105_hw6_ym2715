@@ -85,5 +85,24 @@ each_city_glm %>%
   theme(axis.text.y = element_text(size = 6, hjust = 1)) 
 ```
 
+## Problem 2
+
+```{r data load and wrangling, message=FALSE}
+birthweight_raw = read_csv("http://p8105.com/data/birthweight.csv")
+
+birthweight_tidy = 
+  birthweight_raw %>% 
+  select(bwt, everything()) %>% 
+  mutate(babysex = as.factor(case_when(babysex == 1 ~ "male",
+                                       babysex == 2 ~ "female")),
+         frace = as.factor(frace),
+         mrace = as.factor(mrace),
+         frace = recode(frace,
+                        "1" = "White", "2" = "Black", "3" = "Asian", "4" = "Puerto Rican", "8" = "Other", "9" = "Unknown"),
+         mrace = recode(mrace,
+                        "1" = "White", "2" = "Black", "3" = "Asian", "4" = "Puerto Rican", "8" = "Other"))
+
+
+```
 
 
