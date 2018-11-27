@@ -26,5 +26,26 @@ homi = homi %>%
          city_state != "Tulsa, AL") %>% 
   mutate(victim_race = case_when(victim_race == "White" ~ "white",
                                  TRUE ~ "non-white"),
+         victim_race = fct_relevel(victim_race, ref = "white"),
          victim_age = as.numeric(victim_age))
 ```
+
+```{r logistic regression in Balto}
+balto_glm = homi %>% 
+  filter(city_state == "Baltimore, MD") %>% 
+  mutate(disposition = case_when(disposition == "Closed by arrest" ~ 1,
+                                 TRUE ~ 0))%>% 
+  glm(disposition ~ victim_age + victim_sex + victim_race, data = ., family = binomial())
+
+balto_glm %>% broom::tidy(conf.int = TRUE)
+
+balto_or_ci = balto_glm %>% 
+  broom::tidy(conf.int = TRUE) %>% 
+  mutate(odds_ratio = exp(estimate),
+         conf_lower = exp(conf.low),
+         conf_upper = exp(conf.high)) %>% 
+  select(term, odds_ratio, conf_lower, conf_upper) %>% 
+  filter(term == "victim_racenon-white")
+
+```
+
