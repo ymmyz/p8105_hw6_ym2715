@@ -105,4 +105,66 @@ birthweight_tidy =
 
 ```
 
+```{r fit my model}
+myfit = lm(bwt ~ ., data = birthweight_tidy)
+step(myfit, direction = 'backward')
+model_exp = lm(bwt ~ babysex + bhead + blength + delwt + 
+             fincome + gaweeks + mheight + mrace + parity + ppwt + smoken, 
+             data = birthweight_tidy)
+summary(model_exp)
+```
+
+```{r plot my model}
+birthweight_tidy %>% 
+  add_predictions(model_exp) %>% 
+  add_residuals(model_exp) %>% 
+  ggplot(aes(x = pred, y = resid)) +
+  geom_point(alpha = 0.3) +
+  labs(
+        title = "Residuals VS Fitted Values",
+        x = "Fitted Values",
+        y = "Residuals"
+      ) 
+```
+
+
+```{r comparision model 1}
+model_c1 = lm(bwt ~ blength + gaweeks, 
+              data = birthweight_tidy)
+summary(model_c1)
+```
+
+
+```{r comparision model 2}
+model_c2 = lm(bwt ~ bhead + blength + babysex + bhead*blength + blength*babysex +  bhead*babysex + bhead*blength*babysex, 
+              data = birthweight_tidy)
+summary(model_c2)
+```
+
+```{r compare}
+cv_df =
+  crossv_mc(birthweight_tidy, 100) %>% 
+  mutate(train = map(train, as_tibble),
+         test = map(test, as_tibble)) %>% 
+  mutate(model_exp = map(train, ~lm(bwt ~ babysex + bhead + blength + delwt + fincome + gaweeks 
+                                    + mheight + mrace + parity + ppwt + smoken, 
+                                    data = birthweight_tidy)),
+         model_c1  = map(train, ~lm(bwt ~ blength + gaweeks, 
+                                    data = birthweight_tidy)),
+         model_c2  = map(train, ~lm(bwt ~ bhead + blength + babysex + bhead*blength 
+                                    + blength*babysex + bhead*babysex + bhead*blength*babysex, 
+                                    data = birthweight_tidy))) %>% 
+  mutate(rmse_exp= map2_dbl(model_exp,test, ~rmse(model = .x, data = .y)),
+         rmse_c1 = map2_dbl(model_c1, test, ~rmse(model = .x, data = .y)),
+         rmse_c2 = map2_dbl(model_c2, test, ~rmse(model = .x, data = .y)))
+
+cv_df %>% 
+  select(starts_with("rmse")) %>% 
+  gather(key = model, value = rmse) %>% 
+  mutate(model = str_replace(model, "rmse_", ""),
+         model = fct_inorder(model)) %>% 
+  ggplot(aes(x = model, y = rmse)) + 
+  geom_violin(fill = "slategray1")
+```
+
 
