@@ -1,7 +1,7 @@
 ---
 title: "P8105_hw6_ym2715"
 author: "Yizhi Ma"
-date: "11/26/2018"
+date: "11/27/2018"
 output: github_document
 ---
 
@@ -13,6 +13,8 @@ library(modelr)
 ```
 
 ## Problem 1
+
+  Load data from github and do some cleaning
 
 ```{r data loading and wrangling, message=FALSE, warning=FALSE}
 homi_raw = read_csv("https://raw.githubusercontent.com/washingtonpost/data-homicides/master/homicide-data.csv")
@@ -31,6 +33,8 @@ homi = homi %>%
          victim_age = as.numeric(victim_age))
 ```
 
+  Logistic regression in Baltimore, MD
+
 ```{r logistic regression in Balto}
 balto_glm = homi %>% 
   filter(city_state == "Baltimore, MD") %>% 
@@ -39,7 +43,11 @@ balto_glm = homi %>%
   glm(disposition ~ victim_age + victim_sex + victim_race, data = ., family = binomial())
 
 balto_glm %>% broom::tidy(conf.int = TRUE)
+```
 
+  Calculate odds ratio and CI in Baltimore, MD
+
+```{r odds ratio and ci in balto}
 balto_or_ci = balto_glm %>% 
   broom::tidy(conf.int = TRUE) %>% 
   mutate(odds_ratio = exp(estimate),
@@ -48,7 +56,12 @@ balto_or_ci = balto_glm %>%
   select(term, odds_ratio, conf_lower, conf_upper) %>% 
   filter(term == "victim_racenon-white")
 
+balto_or_ci
 ```
+  
+  As the results shows, the adjusted odds ratio for homicides with non-white victim in Baltimore, MD that a solved is 0.441 times the odds ratio of those with white victim. The 95% CI for this result is 0.312 to 0.620.  
+  
+  Logistic regression for each city
 
 ```{r regression for each city, warning=FALSE}
 each_city_glm = homi %>% 
@@ -66,6 +79,8 @@ each_city_glm = homi %>%
   mutate(odds_ratio = exp(estimate), conf.low = exp(conf.low), conf.high = exp(conf.high)) %>% 
   select(city_state, odds_ratio, conf.low, conf.high)
 ```
+
+  Plot showing the regression results
 
 ```{r plot for each city}
 each_city_glm %>% 
@@ -85,7 +100,13 @@ each_city_glm %>%
   theme(axis.text.y = element_text(size = 6, hjust = 1)) 
 ```
 
+It seems in Boston that non-white people are least likely to be the victim of a solved homicide case.
+
+  
+
 ## Problem 2
+
+  Load data from website and do some cleaning
 
 ```{r data load and wrangling, message=FALSE}
 birthweight_raw = read_csv("http://p8105.com/data/birthweight.csv")
@@ -101,13 +122,15 @@ birthweight_tidy =
                         "1" = "White", "2" = "Black", "3" = "Asian", "4" = "Puerto Rican", "8" = "Other", "9" = "Unknown"),
          mrace = recode(mrace,
                         "1" = "White", "2" = "Black", "3" = "Asian", "4" = "Puerto Rican", "8" = "Other"))
-
-
 ```
+
+  Using stepwise to build model.  
 
 ```{r fit my model}
 myfit = lm(bwt ~ ., data = birthweight_tidy)
+
 step(myfit, direction = 'backward')
+
 model_exp = lm(bwt ~ babysex + bhead + blength + delwt + 
              fincome + gaweeks + mheight + mrace + parity + ppwt + smoken, 
              data = birthweight_tidy)
@@ -127,6 +150,7 @@ birthweight_tidy %>%
       ) 
 ```
 
+  Compare with two other models.
 
 ```{r comparision model 1}
 model_c1 = lm(bwt ~ blength + gaweeks, 
@@ -140,6 +164,8 @@ model_c2 = lm(bwt ~ bhead + blength + babysex + bhead*blength + blength*babysex 
               data = birthweight_tidy)
 summary(model_c2)
 ```
+
+  Comparison in terms of the cross-validated prediction error.  
 
 ```{r compare}
 cv_df =
@@ -167,4 +193,5 @@ cv_df %>%
   geom_violin(fill = "slategray1")
 ```
 
+  This plot compare the RMSE across these three models. According to the plot, we can see clearly that the one using length at birth and gestational age as predictor (model_c1) has the worst result, and our model has the best prediction accuray due to its low RMSE. /clapping
 
